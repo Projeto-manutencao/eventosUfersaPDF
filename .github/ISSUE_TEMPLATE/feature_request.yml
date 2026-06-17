@@ -1,0 +1,59 @@
+name: Feature Request
+description: Sugira uma nova funcionalidade ou melhoria
+title: "[FEAT] "
+labels: ["feature"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Descreva a funcionalidade desejada e o problema que resolve.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Qual problema isso resolve?
+      placeholder: Usuários não conseguem se inscrever em eventos...
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: Solução proposta
+      placeholder: Adicionar endpoint POST /api/eventos/{id}/inscrever/...
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternativas consideradas
+      placeholder: Poderia ser via admin, mas queremos API pública...
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Critérios de aceite (Definition of Done)
+      placeholder: |
+        - [ ] Endpoint criado e documentado
+        - [ ] Validação: não permite inscrição duplicada
+        - [ ] Validação: não permite inscrição se evento lotado
+        - [ ] Testes automatizados passando
+        - [ ] Documentação da API atualizada
+    validations:
+      required: true
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Prioridade
+      options:
+        - Baixa (nice to have)
+        - Média (próxima sprint)
+        - Alta (bloqueia entrega)
+    validations:
+      required: true
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      options:
+        - label: Li o README e sei como criar branch/PR
+          required: true
+        - label: Esta issue tem escopo bem definido (não é "fazer o sistema")
+          required: true

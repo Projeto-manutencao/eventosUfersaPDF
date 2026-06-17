@@ -1,14 +1,29 @@
 # =========================
-# Arquivos do Maven / Java
+# Python / Django
 # =========================
-target/
-*.jar
-*.war
-*.ear
-*.class
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+db.sqlite3
+.env
+.env.local
+*.log
 
 # =========================
-# Configurações de IDEs (VS Code, IntelliJ, Eclipse)
+# Django
+# =========================
+staticfiles/
+media/
+*.pot
+*.pyc
+
+# =========================
+# IDEs
 # =========================
 .idea/
 .vscode/
@@ -18,18 +33,9 @@ target/
 .classpath
 .project
 .settings/
-.apt_generated/
-.factorypath
-.springBeans
 
 # =========================
-# Logs e Arquivos Temporários
-# =========================
-*.log
-hs_err_pid*
-
-# =========================
-# Arquivos de Sistema Operacional
+# OS
 # =========================
 .DS_Store
 Thumbs.db
