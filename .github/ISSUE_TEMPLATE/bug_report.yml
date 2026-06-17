@@ -1,0 +1,61 @@
+name: Bug Report
+description: Reporte um bug ou comportamento inesperado
+title: "[BUG] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Obrigado por reportar! Seja o mais específico possível.
+  - type: input
+    id: summary
+    attributes:
+      label: Resumo do bug
+      placeholder: Ex: Erro 500 ao criar evento com data fim anterior à data início
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Passos para reproduzir
+      placeholder: |
+        1. Vá em /api/eventos/
+        2. POST com data_fim < data_inicio
+        3. Observe erro 500
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Comportamento esperado
+      placeholder: Deveria retornar 400 com mensagem de validação clara
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Comportamento atual
+      placeholder: Retorna 500 Internal Server Error
+    validations:
+      required: true
+  - type: input
+    id: env
+    attributes:
+      label: Ambiente
+      placeholder: Local / Produção (Amplify)
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / Traceback (se houver)
+      render: shell
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      options:
+        - label: Já verifiquei se não existe issue duplicada
+          required: true
+        - label: Consigo reproduzir consistentemente
+          required: false

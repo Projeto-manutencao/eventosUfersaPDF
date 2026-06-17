@@ -1,0 +1,40 @@
+version: '3.8'
+
+# Opcional: para testar com PostgreSQL local (produção-like)
+# O desenvolvimento padrão usa SQLite (zero config)
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: eventos-db
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-eventos_db}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  web:
+    build: .
+    container_name: eventos-web
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      - DATABASE_URL=postgres://postgres:postgres@db:5432/eventos_db
+
+volumes:
+  postgres_data:
