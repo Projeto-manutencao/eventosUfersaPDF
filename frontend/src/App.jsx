@@ -1,6 +1,10 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 
+const api = axios.create({
+  baseURL: import.meta.env.VITE_API_URL || '/api',
+});
+
 function App() {
   const [eventos, setEventos] = useState([]);
   const [id, setId] = useState(null);
@@ -45,7 +49,7 @@ function App() {
       if (ordenacao) params.append('ordering', ordenacao);
       params.append('page', paginaAtual);
 
-      const response = await axios.get(`/api/eventos/?${params.toString()}`);
+      const response = await api.get(`/eventos/?${params.toString()}`);
       
       if (Array.isArray(response.data)) {
         setEventos(response.data);
@@ -110,9 +114,9 @@ function App() {
 
     try {
       if (editando) {
-        await axios.put(`/api/eventos/${id}/`, dadosEvento);
+        await api.put(`/eventos/${id}/`, dadosEvento);
       } else {
-        await axios.post('/api/eventos/', dadosEvento);
+        await api.post('/eventos/', dadosEvento);
       }
       fecharEFecharModal();
       carregarEventos();
@@ -125,7 +129,7 @@ function App() {
   const deletarEvento = async (id) => {
     if (window.confirm("Tem certeza que deseja remover este evento?")) {
       try {
-        await axios.delete(`/api/eventos/${id}/`);
+        await api.delete(`/eventos/${id}/`);
         carregarEventos();
       } catch (error) {
         console.error("Erro ao remover evento:", error);
