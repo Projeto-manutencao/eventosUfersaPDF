@@ -15,7 +15,10 @@ function App() {
 
   // Estados dos Filtros, Loading e Erro
   const [busca, setBusca] = useState('');
-  const [filtroAtivo, setFiltroAtivo] = useState(''); // '' (Tudo), 'ativos' (Ativos), 'encerrados' (Encerrados)
+  const [filtroAtivo, setFiltroAtivo] = useState(''); // '' (Tudo), 'true' (Ativos), 'false' (Encerrados/Inativos)
+  const [ordenacao, setOrdenacao] = useState('-data_inicio');
+  const [paginaAtual, setPaginaAtual] = useState(1);
+  const [totalPaginas, setTotalPaginas] = useState(1);
   const [carregando, setCarregando] = useState(false);
   const [erroMensagem, setErroMensagem] = useState('');
 
@@ -31,19 +34,27 @@ function App() {
     textoEscuro: '#2c3e50'
   };
 
-  // 1. READ - Busca dados brutos filtrando apenas por texto via API
+  // 1. READ - Busca dados com filtros, ordenação e paginação via API
   const carregarEventos = async () => {
     setCarregando(true);
     setErroMensagem('');
     try {
-      let url = '/api/eventos/?';
-      if (busca) url += `search=${busca}`;
+      const params = new URLSearchParams();
+      if (busca) params.append('search', busca);
+      if (filtroAtivo) params.append('ativo', filtroAtivo);
+      if (ordenacao) params.append('ordering', ordenacao);
+      params.append('page', paginaAtual);
 
-      const response = await axios.get(url);
+      const response = await axios.get(`/api/eventos/?${params.toString()}`);
+      
       if (Array.isArray(response.data)) {
         setEventos(response.data);
+        setTotalPaginas(1);
       } else if (response.data && Array.isArray(response.data.results)) {
         setEventos(response.data.results);
+        const count = response.data.count || 0;
+        const pageSize = 20; // DRF PAGE_SIZE default
+        setTotalPaginas(Math.ceil(count / pageSize));
       }
     } catch (error) {
       console.error("Erro ao buscar eventos:", error);
@@ -54,11 +65,16 @@ function App() {
   };
 
   useEffect(() => {
+    setPaginaAtual(1);
     const delayDebounce = setTimeout(() => {
       carregarEventos();
     }, 300);
     return () => clearTimeout(delayDebounce);
-  }, [busca]);
+  }, [busca, filtroAtivo, ordenacao]);
+
+  useEffect(() => {
+    carregarEventos();
+  }, [paginaAtual]);
 
   // Função centralizada para calcular o status do evento em tempo real
   const obterStatusEvento = (evento) => {
@@ -80,14 +96,6 @@ function App() {
     
     return { tipo: 'ativos', texto: 'Ativo', corFundo: '#e8f8f0', corTexto: CORES.verdeSucesso };
   };
-
-  // Filtra os eventos localmente com precisão cirúrgica de datas antes de renderizar a tabela
-  const eventosFiltrados = eventos.filter(evento => {
-    const statusInfo = obterStatusEvento(evento);
-    if (filtroAtivo === 'ativos') return statusInfo.tipo === 'ativos';
-    if (filtroAtivo === 'encerrados') return statusInfo.tipo === 'encerrados';
-    return true; // Se for 'Tudo', mostra qualquer um
-  });
 
   const salvarEvento = async (e) => {
     e.preventDefault();
@@ -217,9 +225,9 @@ function App() {
         </button>
       </div>
 
-      {/* Filtros Ajustados com "Encerrados" */}
-      <div style={{ display: 'flex', gap: '15px', marginBottom: '25px', backgroundColor: 'white', padding: '18px', borderRadius: '12px', boxShadow: '0 4px 10px rgba(0,0,0,0.1)' }}>
-        <div style={{ flex: 1 }}>
+      {/* Filtros: Busca, Status, Ordenação */}
+      <div style={{ display: 'flex', gap: '15px', marginBottom: '25px', backgroundColor: 'white', padding: '18px', borderRadius: '12px', boxShadow: '0 4px 10px rgba(0,0,0,0.1)', flexWrap: 'wrap' }}>
+        <div style={{ flex: 1, minWidth: '250px' }}>
           <input 
             type="text" 
             placeholder="🔍 Buscar por título ou local do evento..." 
@@ -228,15 +236,29 @@ function App() {
             style={{ width: '100%', padding: '12px 16px', borderRadius: '8px', border: '1px solid #dcdfe6', boxSizing: 'border-box', fontSize: '14px', outline: 'none', backgroundColor: '#fafafa' }}
           />
         </div>
-        <div style={{ width: '240px' }}>
+        <div style={{ width: '220px' }}>
           <select 
             value={filtroAtivo} 
-            onChange={(e) => setFiltroAtivo(e.target.value)}
+            onChange={(e) => { setFiltroAtivo(e.target.value); setPaginaAtual(1); }}
             style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #dcdfe6', height: '100%', fontSize: '14px', outline: 'none', backgroundColor: '#fafafa', color: CORES.textoEscuro }}
           >
             <option value="">📋 Status: Todos</option>
-            <option value="ativos">✅ Apenas Ativos</option>
-            <option value="encerrados">⏳ Apenas Encerrados</option> {/* Atualizado aqui */}
+            <option value="true">✅ Apenas Ativos</option>
+            <option value="false">⏳ Encerrados/Inativos</option>
+          </select>
+        </div>
+        <div style={{ width: '220px' }}>
+          <select 
+            value={ordenacao} 
+            onChange={(e) => { setOrdenacao(e.target.value); setPaginaAtual(1); }}
+            style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #dcdfe6', height: '100%', fontSize: '14px', outline: 'none', backgroundColor: '#fafafa', color: CORES.textoEscuro }}
+          >
+            <option value="-data_inicio">📅 Data Início (Recente)</option>
+            <option value="data_inicio">📅 Data Início (Antigo)</option>
+            <option value="-criado_em">🕐 Criado (Recente)</option>
+            <option value="criado_em">🕐 Criado (Antigo)</option>
+            <option value="titulo">🔤 Título (A-Z)</option>
+            <option value="-titulo">🔤 Título (Z-A)</option>
           </select>
         </div>
       </div>
@@ -271,13 +293,12 @@ function App() {
                   ⏳ Buscando dados no banco da UFERSA...
                 </td>
               </tr>
-            ) : eventosFiltrados.length === 0 ? (
-              /* Verifica o array local filtrado */
+            ) : eventos.length === 0 ? (
               <tr>
                 <td colSpan="8" style={{ padding: '30px', textAlign: 'center', color: CORES.cinzaTexto }}>Nenhum evento encontrado para os filtros atuais.</td>
               </tr>
             ) : (
-              eventosFiltrados.map((evento) => {
+              eventos.map((evento) => {
                 const statusInfo = obterStatusEvento(evento);
 
                 return (
@@ -326,6 +347,47 @@ function App() {
             )}
           </tbody>
         </table>
+
+        {/* Paginação */}
+        {totalPaginas > 1 && (
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '10px', marginTop: '20px', padding: '10px' }}>
+            <button
+              onClick={() => setPaginaAtual(p => Math.max(1, p - 1))}
+              disabled={paginaAtual === 1}
+              style={{
+                padding: '8px 16px',
+                backgroundColor: paginaAtual === 1 ? '#e2e8f0' : CORES.cinzaBotao,
+                color: paginaAtual === 1 ? '#a0aec0' : CORES.azulLetraBotao,
+                border: 'none',
+                borderRadius: '6px',
+                cursor: paginaAtual === 1 ? 'not-allowed' : 'pointer',
+                fontWeight: '600',
+                fontSize: '13px'
+              }}
+            >
+              ◀ Anterior
+            </button>
+            <span style={{ color: CORES.textoEscuro, fontWeight: '500' }}>
+              Página {paginaAtual} de {totalPaginas}
+            </span>
+            <button
+              onClick={() => setPaginaAtual(p => Math.min(totalPaginas, p + 1))}
+              disabled={paginaAtual >= totalPaginas}
+              style={{
+                padding: '8px 16px',
+                backgroundColor: paginaAtual >= totalPaginas ? '#e2e8f0' : CORES.cinzaBotao,
+                color: paginaAtual >= totalPaginas ? '#a0aec0' : CORES.azulLetraBotao,
+                border: 'none',
+                borderRadius: '6px',
+                cursor: paginaAtual >= totalPaginas ? 'not-allowed' : 'pointer',
+                fontWeight: '600',
+                fontSize: '13px'
+              }}
+            >
+              Próxima ▶
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Modal Customizado */}
