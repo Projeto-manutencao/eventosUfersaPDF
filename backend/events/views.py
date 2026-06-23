@@ -2,14 +2,18 @@ import logging
 
 from django.conf import settings
 from django.core.mail import send_mail
-from rest_framework import viewsets, filters, status
-from rest_framework.response import Response
-from rest_framework.permissions import AllowAny  # <-- Nova importação adicionada
 from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import filters, status, viewsets
+from rest_framework.permissions import AllowAny
+from rest_framework.response import Response
 
-# Importações unificadas e limpas
 from .models import Evento, SolicitacaoManutencao
-from .serializers import EventoSerializer, SolicitacaoManutencaoSerializer
+from .permissions import IsAdminUser, IsAuthenticatedReadAdminWrite
+from .serializers import (
+    AdminSolicitacaoManutencaoSerializer,
+    EventoSerializer,
+    SolicitacaoManutencaoSerializer,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -17,24 +21,40 @@ logger = logging.getLogger(__name__)
 class EventoViewSet(viewsets.ModelViewSet):
     queryset = Evento.objects.all()
     serializer_class = EventoSerializer
+    permission_classes = [IsAuthenticatedReadAdminWrite]
     filter_backends = [
         DjangoFilterBackend,
         filters.SearchFilter,
-        filters.OrderingFilter
+        filters.OrderingFilter,
     ]
     filterset_fields = ['ativo']
     search_fields = ['titulo', 'descricao', 'local', 'organizador']
     ordering_fields = ['data_inicio', 'criado_em']
-    ordering = ['-data_inicio']  # Duplicação removida
+    ordering = ['-data_inicio']
 
 
 class SolicitacaoManutencaoViewSet(viewsets.ModelViewSet):
     queryset = SolicitacaoManutencao.objects.all()
-    serializer_class = SolicitacaoManutencaoSerializer
-    
-    permission_classes = [AllowAny]  # <-- Permissão pública adicionada aqui
+    filter_backends = [
+        DjangoFilterBackend,
+        filters.SearchFilter,
+        filters.OrderingFilter,
+    ]
+    filterset_fields = ['tipo', 'prioridade', 'status']
+    search_fields = ['protocolo', 'titulo', 'descricao', 'email_contato']
+    ordering_fields = ['criado_em', 'atualizado_em', 'prioridade', 'status']
+    ordering = ['-criado_em']
+    http_method_names = ['get', 'post', 'patch', 'head', 'options']
 
-    http_method_names = ['post', 'head', 'options']
+    def get_serializer_class(self):
+        if self.action == 'create':
+            return SolicitacaoManutencaoSerializer
+        return AdminSolicitacaoManutencaoSerializer
+
+    def get_permissions(self):
+        if self.action == 'create':
+            return [AllowAny()]
+        return [IsAdminUser()]
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -45,10 +65,10 @@ class SolicitacaoManutencaoViewSet(viewsets.ModelViewSet):
 
         return Response(
             {
-                "protocolo": solicitacao.protocolo,
-                "mensagem": "Solicitação registrada com sucesso. Retornaremos em até 2 dias úteis."
+                'protocolo': solicitacao.protocolo,
+                'mensagem': 'Solicitacao registrada com sucesso. Retornaremos em ate 2 dias uteis.',
             },
-            status=status.HTTP_201_CREATED
+            status=status.HTTP_201_CREATED,
         )
 
     def _enviar_email_equipe(self, solicitacao):
@@ -57,15 +77,15 @@ class SolicitacaoManutencaoViewSet(viewsets.ModelViewSet):
             logger.warning('MANUTENCAO_EMAIL_EQUIPE nao configurado; e-mail nao enviado.')
             return
 
-        assunto = f'Nova solicitação de manutenção - {solicitacao.protocolo}'
+        assunto = f'Nova solicitacao de manutencao - {solicitacao.protocolo}'
         mensagem = (
             f'Protocolo: {solicitacao.protocolo}\n'
             f'Tipo: {solicitacao.get_tipo_display()}\n'
             f'Prioridade: {solicitacao.get_prioridade_display()}\n'
             f'Status: {solicitacao.get_status_display()}\n'
-            f'Título: {solicitacao.titulo}\n'
-            f'E-mail de contato: {solicitacao.email_contato or "Não informado"}\n\n'
-            f'Descrição:\n{solicitacao.descricao}\n'
+            f'Titulo: {solicitacao.titulo}\n'
+            f'E-mail de contato: {solicitacao.email_contato or "Nao informado"}\n\n'
+            f'Descricao:\n{solicitacao.descricao}\n'
         )
 
         try:
