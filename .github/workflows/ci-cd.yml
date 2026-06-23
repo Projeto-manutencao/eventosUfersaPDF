@@ -1,24 +1,18 @@
 name: CI Pipeline
 
-# 1. GATILHOS (Triggers)
 on:
   push:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
 
-# 2. TAREFAS (Jobs)
 jobs:
-  # --- JOB 1: Validação do Backend (Django) ---
   backend-check:
     name: Backend Check
     runs-on: ubuntu-latest
-
-  
     defaults:
       run:
         working-directory: ./backend
-
     steps:
       - name: Checkout do código
         uses: actions/checkout@v4
@@ -26,34 +20,26 @@ jobs:
       - name: Configurar Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.12' # Altere para a versão do Python usada no seu projeto
+          python-version: '3.12'
 
       - name: Instalar dependências do Backend
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt 
-        # Se usar Pipenv, Poetry, ou se o requirements estiver em outra pasta, ajuste o comando acima.
+        run: pip install -r requirements.txt
 
       - name: Executar Django Check (Deploy)
         run: python manage.py check --deploy
         env:
-          # O Django exige uma SECRET_KEY para rodar os comandos. 
-          # Colocamos uma falsa aqui apenas para a pipeline não quebrar.
-          SECRET_KEY: 'your-secret-key-here'
-          DEBUG: 'True'
+          SECRET_KEY: 'ci-test-secret-key'
+          DEBUG: 'False'
 
       - name: Coletar arquivos estáticos
         run: python manage.py collectstatic --noinput
         env:
-          SECRET_KEY: 'your-secret-key-here'
-          DEBUG: 'True'
+          SECRET_KEY: 'ci-test-secret-key'
+          DEBUG: 'False'
 
-
-  # --- JOB 2: Build do Frontend (Vite) ---
   frontend-build:
     name: Frontend Build
     runs-on: ubuntu-latest
-
     defaults:
       run:
         working-directory: ./frontend
@@ -64,10 +50,12 @@ jobs:
       - name: Configurar Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: '20'
 
       - name: Instalar dependências do Frontend
-        run: npm install
+        run: npm ci
 
       - name: Executar Build
         run: npm run build
+        env:
+          VITE_API_URL: https://example.com/api
