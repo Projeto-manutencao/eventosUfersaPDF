@@ -21,3 +21,4 @@ class AllowAnyReadAdminWrite(BasePermission):
         if request.method in SAFE_METHODS:
             return AllowAny().has_permission(request, view)
         return IsAdminUser().has_permission(request, view)
+      

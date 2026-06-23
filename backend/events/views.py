@@ -66,7 +66,7 @@ class SolicitacaoManutencaoViewSet(viewsets.ModelViewSet):
         return Response(
             {
                 'protocolo': solicitacao.protocolo,
-                'mensagem': 'Solicitacao registrada com sucesso. Retornaremos em ate 2 dias uteis.',
+                'mensagem': 'Solicitação registrada com sucesso. Retornaremos em até 2 dias úteis.',
             },
             status=status.HTTP_201_CREATED,
         )
@@ -74,18 +74,18 @@ class SolicitacaoManutencaoViewSet(viewsets.ModelViewSet):
     def _enviar_email_equipe(self, solicitacao):
         destinatario = getattr(settings, 'MANUTENCAO_EMAIL_EQUIPE', '')
         if not destinatario:
-            logger.warning('MANUTENCAO_EMAIL_EQUIPE nao configurado; e-mail nao enviado.')
+            logger.warning('MANUTENCAO_EMAIL_EQUIPE não configurado; e-mail não enviado.')
             return
 
-        assunto = f'Nova solicitacao de manutencao - {solicitacao.protocolo}'
+        assunto = f'Nova solicitação de manutenção - {solicitacao.protocolo}'
         mensagem = (
             f'Protocolo: {solicitacao.protocolo}\n'
             f'Tipo: {solicitacao.get_tipo_display()}\n'
             f'Prioridade: {solicitacao.get_prioridade_display()}\n'
             f'Status: {solicitacao.get_status_display()}\n'
-            f'Titulo: {solicitacao.titulo}\n'
-            f'E-mail de contato: {solicitacao.email_contato or "Nao informado"}\n\n'
-            f'Descricao:\n{solicitacao.descricao}\n'
+            f'Título: {solicitacao.titulo}\n'
+            f'E-mail de contato: {solicitacao.email_contato or "Não informado"}\n\n'
+            f'Descrição:\n{solicitacao.descricao}\n'
         )
 
         try:
@@ -97,4 +97,5 @@ class SolicitacaoManutencaoViewSet(viewsets.ModelViewSet):
                 fail_silently=False,
             )
         except Exception:
-            logger.exception('Falha ao enviar e-mail da solicitacao %s.', solicitacao.protocolo)
+            logger.exception('Falha ao enviar e-mail da solicitação %s.', solicitacao.protocolo)
+            

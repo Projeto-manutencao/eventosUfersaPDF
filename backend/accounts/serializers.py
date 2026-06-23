@@ -112,3 +112,4 @@ class UserSerializer(serializers.Serializer):
 
     def get_role(self, user):
         return get_user_role(user)
+      
