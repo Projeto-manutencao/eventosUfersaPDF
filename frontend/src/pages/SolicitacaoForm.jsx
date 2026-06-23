@@ -1,212 +1,154 @@
 import { useState } from 'react';
 import toast, { Toaster } from 'react-hot-toast';
-
-const API_URL = import.meta.env.VITE_API_URL || '/api';
+import { Link } from 'react-router-dom';
+import api from '../services/api';
 
 export default function SolicitacaoForm() {
-    const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState({
+    tipo: 'bug',
+    titulo: '',
+    descricao: '',
+    email_contato: '',
+    prioridade: 'media',
+  });
+  const [loading, setLoading] = useState(false);
+
+  const CORES = {
+    fundoAzulTotal: '#002244',
+    azulUfersa: '#003366',
+    textoEscuro: '#2c3e50',
+    bordaInput: '#dcdfe6',
+    fundoInput: '#fafafa',
+  };
+
+  const handleChange = (event) => {
+    const { name, value } = event.target;
+    setFormData((prevState) => ({
+      ...prevState,
+      [name]: value,
+    }));
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+
+    if (!formData.titulo.trim() || !formData.descricao.trim()) {
+      toast.error('Titulo e descricao sao obrigatorios.');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const response = await api.post('/solicitacoes/', formData);
+      toast.success(`Sucesso! Protocolo: ${response.data.protocolo}`, { duration: 5000 });
+
+      setFormData({
         tipo: 'bug',
         titulo: '',
         descricao: '',
         email_contato: '',
-        prioridade: 'media'
-    });
-    const [loading, setLoading] = useState(false);
+        prioridade: 'media',
+      });
+    } catch (error) {
+      toast.error('Ocorreu um erro ao enviar sua solicitacao. Tente novamente.');
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    // Paleta de Cores baseada no seu App.jsx para manter o padrão
-    const CORES = {
-        fundoAzulTotal: '#002244',
-        azulUfersa: '#003366',
-        cinzaBotao: '#e2e8f0',
-        textoEscuro: '#2c3e50',
-        bordaInput: '#dcdfe6',
-        fundoInput: '#fafafa'
-    };
+  const inputStyle = {
+    width: '100%',
+    padding: '12px 16px',
+    boxSizing: 'border-box',
+    borderRadius: '8px',
+    border: `1px solid ${CORES.bordaInput}`,
+    fontSize: '14px',
+    outline: 'none',
+    backgroundColor: CORES.fundoInput,
+    color: CORES.textoEscuro,
+    fontFamily: 'inherit',
+  };
 
-    const handleChange = (e) => {
-        const { name, value } = e.target;
-        setFormData(prevState => ({
-            ...prevState,
-            [name]: value
-        }));
-    };
+  const labelStyle = {
+    display: 'block',
+    marginBottom: '8px',
+    fontWeight: '600',
+    color: CORES.textoEscuro,
+    fontSize: '14px',
+  };
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
+  return (
+    <div style={{ minHeight: '100vh', backgroundColor: CORES.fundoAzulTotal, display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '40px', fontFamily: '"Segoe UI", Roboto, sans-serif' }}>
+      <Toaster position="top-right" />
 
-        if (!formData.titulo.trim() || !formData.descricao.trim()) {
-            toast.error('Título e Descrição são obrigatórios!');
-            return;
-        }
+      <div style={{ backgroundColor: 'white', padding: '40px', borderRadius: '8px', width: '100%', maxWidth: '600px', boxShadow: '0 10px 30px rgba(0,0,0,0.3)', borderTop: `8px solid ${CORES.azulUfersa}` }}>
+        <h1 style={{ marginTop: 0, marginBottom: '14px', color: CORES.azulUfersa, fontSize: '24px', fontWeight: '700', textAlign: 'center' }}>
+          Nova Solicitacao de Manutencao
+        </h1>
 
-        setLoading(true);
+        <Link to="/eventos" style={{ display: 'inline-flex', marginBottom: '24px', color: CORES.azulUfersa, fontWeight: '700', textDecoration: 'none' }}>
+          Voltar para eventos
+        </Link>
 
-        try {
-            const response = await fetch(`${API_URL}/solicitacoes/`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(formData)
-            });
+        <form onSubmit={handleSubmit}>
+          <div style={{ marginBottom: '20px' }}>
+            <label style={labelStyle}>Tipo da Solicitacao:</label>
+            <select name="tipo" value={formData.tipo} onChange={handleChange} style={inputStyle}>
+              <option value="bug">Bug / Erro</option>
+              <option value="melhoria">Melhoria / Nova funcionalidade</option>
+              <option value="duvida">Duvida / Suporte</option>
+            </select>
+          </div>
 
-            if (!response.ok) {
-                throw new Error('Erro ao enviar solicitação');
-            }
+          <div style={{ marginBottom: '20px' }}>
+            <label style={labelStyle}>Titulo do problema ou ideia *</label>
+            <input
+              type="text"
+              name="titulo"
+              required
+              value={formData.titulo}
+              onChange={handleChange}
+              placeholder="Ex: Erro ao clicar no botao de criar evento"
+              style={inputStyle}
+            />
+          </div>
 
-            const data = await response.json();
-            
-            toast.success(`Sucesso! Protocolo: ${data.protocolo}`, { duration: 5000 });
-            
-            setFormData({
-                tipo: 'bug',
-                titulo: '',
-                descricao: '',
-                email_contato: '',
-                prioridade: 'media'
-            });
+          <div style={{ marginBottom: '20px' }}>
+            <label style={labelStyle}>Descricao detalhada *</label>
+            <textarea
+              name="descricao"
+              required
+              rows="5"
+              value={formData.descricao}
+              onChange={handleChange}
+              placeholder="Descreva o passo a passo do erro ou os detalhes da sua sugestao..."
+              style={{ ...inputStyle, resize: 'vertical' }}
+            />
+          </div>
 
-        } catch (error) {
-            toast.error('Ocorreu um erro ao enviar sua solicitação. Tente novamente.');
-            console.error(error);
-        } finally {
-            setLoading(false);
-        }
-    };
+          <div style={{ marginBottom: '30px' }}>
+            <label style={labelStyle}>E-mail para retorno (opcional):</label>
+            <input
+              type="email"
+              name="email_contato"
+              value={formData.email_contato}
+              onChange={handleChange}
+              placeholder="seuemail@ufersa.edu.br"
+              style={inputStyle}
+            />
+          </div>
 
-    const inputStyle = {
-        width: '100%', 
-        padding: '12px 16px', 
-        boxSizing: 'border-box', 
-        borderRadius: '8px', 
-        border: `1px solid ${CORES.bordaInput}`, 
-        fontSize: '14px', 
-        outline: 'none', 
-        backgroundColor: CORES.fundoInput,
-        color: CORES.textoEscuro,
-        fontFamily: 'inherit'
-    };
-
-    const labelStyle = {
-        display: 'block', 
-        marginBottom: '8px', 
-        fontWeight: '600', 
-        color: CORES.textoEscuro, 
-        fontSize: '14px'
-    };
-
-    return (
-        <div style={{ 
-            minHeight: '100vh', 
-            backgroundColor: CORES.fundoAzulTotal, 
-            display: 'flex', 
-            justifyContent: 'center', 
-            alignItems: 'center', 
-            padding: '40px', 
-            fontFamily: '"Segoe UI", Roboto, sans-serif' 
-        }}>
-            <Toaster position="top-right" />
-            
-            <div style={{ 
-                backgroundColor: 'white', 
-                padding: '40px', 
-                borderRadius: '16px', 
-                width: '100%', 
-                maxWidth: '600px', 
-                boxShadow: '0 10px 30px rgba(0,0,0,0.3)', 
-                borderTop: `8px solid ${CORES.azulUfersa}` 
-            }}>
-                
-                <h2 style={{ 
-                    marginTop: 0, 
-                    marginBottom: '30px', 
-                    color: CORES.azulUfersa, 
-                    fontSize: '24px', 
-                    fontWeight: '700',
-                    textAlign: 'center'
-                }}>
-                    Nova Solicitação de Manutenção
-                </h2>
-                
-                <form onSubmit={handleSubmit}>
-                    
-                    <div style={{ marginBottom: '20px' }}>
-                        <label style={labelStyle}>Tipo da Solicitação:</label>
-                        <select 
-                            name="tipo" 
-                            value={formData.tipo} 
-                            onChange={handleChange}
-                            style={inputStyle}
-                        >
-                            <option value="bug">Bug / Erro</option>
-                            <option value="melhoria">Melhoria / Nova funcionalidade</option>
-                            <option value="duvida">Dúvida / Suporte</option>
-                        </select>
-                    </div>
-
-                    <div style={{ marginBottom: '20px' }}>
-                        <label style={labelStyle}>
-                            Título do Problema ou Ideia <span style={{color: '#c0392b'}}>*</span>
-                        </label>
-                        <input 
-                            type="text" 
-                            name="titulo" 
-                            required
-                            value={formData.titulo} 
-                            onChange={handleChange}
-                            placeholder="Ex: Erro ao clicar no botão de criar evento"
-                            style={inputStyle}
-                        />
-                    </div>
-
-                    <div style={{ marginBottom: '20px' }}>
-                        <label style={labelStyle}>
-                            Descrição Detalhada <span style={{color: '#c0392b'}}>*</span>
-                        </label>
-                        <textarea 
-                            name="descricao" 
-                            required
-                            rows="5"
-                            value={formData.descricao} 
-                            onChange={handleChange}
-                            placeholder="Descreva o passo a passo do erro ou os detalhes da sua sugestão..."
-                            style={{...inputStyle, resize: 'vertical'}}
-                        ></textarea>
-                    </div>
-
-                    <div style={{ marginBottom: '30px' }}>
-                        <label style={labelStyle}>E-mail para Retorno (Opcional):</label>
-                        <input 
-                            type="email" 
-                            name="email_contato" 
-                            value={formData.email_contato} 
-                            onChange={handleChange}
-                            placeholder="seuemail@ufersa.edu.br"
-                            style={inputStyle}
-                        />
-                    </div>
-
-                    <button 
-                        type="submit" 
-                        disabled={loading}
-                        style={{ 
-                            width: '100%', 
-                            padding: '14px', 
-                            backgroundColor: loading ? '#7f8c8d' : CORES.azulUfersa, 
-                            color: 'white', 
-                            border: 'none', 
-                            borderRadius: '8px', 
-                            cursor: loading ? 'not-allowed' : 'pointer', 
-                            fontWeight: '700', 
-                            fontSize: '16px',
-                            transition: 'background-color 0.3s'
-                        }}
-                    >
-                        {loading ? 'Processando...' : 'Enviar Solicitação'}
-                    </button>
-
-                </form>
-            </div>
-        </div>
-    );
+          <button
+            type="submit"
+            disabled={loading}
+            style={{ width: '100%', padding: '14px', backgroundColor: loading ? '#7f8c8d' : CORES.azulUfersa, color: 'white', border: 'none', borderRadius: '8px', cursor: loading ? 'not-allowed' : 'pointer', fontWeight: '700', fontSize: '16px' }}
+          >
+            {loading ? 'Processando...' : 'Enviar Solicitacao'}
+          </button>
+        </form>
+      </div>
+    </div>
+  );
 }

@@ -156,18 +156,34 @@ export default function EventosPage() {
         <div>
           <h1 style={{ color: CORES.azulUfersa, margin: 0, fontSize: '26px', fontWeight: '700' }}>EventosUfersaPDF</h1>
           <p style={{ margin: '6px 0 0', color: '#52616f', fontSize: '14px' }}>
-            {user?.email} - {isAdmin ? 'Administrador' : 'Usuario comum'}
+            {user ? `${user.email} - ${isAdmin ? 'Administrador' : 'Usuario comum'}` : 'Eventos disponiveis para visitantes'}
           </p>
         </div>
 
         <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-          {isAdmin ? (
-            <Link to="/solicitacoes" style={linkBotao(CORES.cinzaBotao, CORES.azulLetraBotao)}>
-              Solicitacoes
-            </Link>
-          ) : (
+          {!user && (
+            <>
+              <Link to="/login" style={linkBotao(CORES.cinzaBotao, CORES.azulLetraBotao)}>
+                Entrar
+              </Link>
+              <Link to="/admin-login" style={linkBotao('#f4f6f8', CORES.azulLetraBotao)}>
+                Entrar como Admin
+              </Link>
+              <Link to="/solicitar" style={linkBotao('#fdedec', CORES.vermelhoErro)}>
+                Solicitar Manutencao
+              </Link>
+            </>
+          )}
+
+          {user && !isAdmin && (
             <Link to="/solicitar" style={linkBotao('#fdedec', CORES.vermelhoErro)}>
               Solicitar Manutencao
+            </Link>
+          )}
+
+          {isAdmin && (
+            <Link to="/solicitacoes" style={linkBotao(CORES.cinzaBotao, CORES.azulLetraBotao)}>
+              Solicitacoes
             </Link>
           )}
 
@@ -177,9 +193,11 @@ export default function EventosPage() {
             </button>
           )}
 
-          <button onClick={sair} style={botaoSecundario}>
-            Sair
-          </button>
+          {user && (
+            <button onClick={sair} style={botaoSecundario}>
+              Sair
+            </button>
+          )}
         </div>
       </div>
 

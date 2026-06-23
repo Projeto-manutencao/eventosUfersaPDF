@@ -15,7 +15,7 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     setUnauthorizedHandler(() => {
       logout();
-      if (window.location.pathname !== '/login' && window.location.pathname !== '/solicitar') {
+      if (!['/login', '/admin-login', '/eventos'].includes(window.location.pathname)) {
         window.location.assign('/login');
       }
     });
@@ -41,11 +41,31 @@ export function AuthProvider({ children }) {
     loadUser();
   }, [logout]);
 
+  const saveSession = (data) => {
+    tokenStorage.setTokens(data);
+    setUser(data.user);
+    return data.user;
+  };
+
   const login = async ({ email, password }) => {
     const response = await api.post('/auth/login/', { email, password });
-    tokenStorage.setTokens(response.data);
-    setUser(response.data.user);
-    return response.data.user;
+    return saveSession(response.data);
+  };
+
+  const adminLogin = async ({ email, password }) => {
+    const response = await api.post('/auth/admin-login/', { email, password });
+    return saveSession(response.data);
+  };
+
+  const register = async ({ nome, email, password }) => {
+    const response = await api.post('/auth/register/', { nome, email, password });
+    return saveSession(response.data);
+  };
+
+  const refreshUser = async () => {
+    const response = await api.get('/auth/me/');
+    setUser(response.data);
+    return response.data;
   };
 
   const value = useMemo(
@@ -55,6 +75,9 @@ export function AuthProvider({ children }) {
       isAuthenticated: Boolean(user),
       isAdmin: user?.role === 'admin' || user?.is_staff,
       login,
+      adminLogin,
+      register,
+      refreshUser,
       logout,
     }),
     [loading, user, logout]

@@ -5,6 +5,7 @@ import EventosPage from './pages/EventosPage';
 import LoginPage from './pages/LoginPage';
 import SolicitacaoForm from './pages/SolicitacaoForm';
 import SolicitacoesPage from './pages/SolicitacoesPage';
+import AdminLoginPage from './pages/AdminLoginPage';
 
 function App() {
   return (
@@ -13,19 +14,23 @@ function App() {
         <Routes>
           <Route path="/" element={<Navigate to="/eventos" replace />} />
           <Route path="/login" element={<LoginPage />} />
-          <Route path="/solicitar" element={<SolicitacaoForm />} />
+          <Route path="/admin-login" element={<AdminLoginPage />} />
           <Route
-            path="/eventos"
+            path="/solicitar"
             element={
               <ProtectedRoute>
-                <EventosPage />
+                <SolicitacaoForm />
               </ProtectedRoute>
             }
           />
           <Route
+            path="/eventos"
+            element={<EventosPage />}
+          />
+          <Route
             path="/eventos/novo"
             element={
-              <ProtectedRoute adminOnly>
+              <ProtectedRoute adminOnly loginPath="/admin-login">
                 <Navigate to="/eventos" replace />
               </ProtectedRoute>
             }
@@ -33,7 +38,7 @@ function App() {
           <Route
             path="/eventos/editar/:id"
             element={
-              <ProtectedRoute adminOnly>
+              <ProtectedRoute adminOnly loginPath="/admin-login">
                 <Navigate to="/eventos" replace />
               </ProtectedRoute>
             }
@@ -41,7 +46,7 @@ function App() {
           <Route
             path="/solicitacoes"
             element={
-              <ProtectedRoute adminOnly>
+              <ProtectedRoute adminOnly loginPath="/admin-login">
                 <SolicitacoesPage />
               </ProtectedRoute>
             }
