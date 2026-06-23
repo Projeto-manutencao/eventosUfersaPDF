@@ -4,11 +4,11 @@ from django.conf import settings
 from django.core.mail import send_mail
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, status, viewsets
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from .models import Evento, SolicitacaoManutencao
-from .permissions import IsAdminUser, IsAuthenticatedReadAdminWrite
+from .permissions import AllowAnyReadAdminWrite, IsAdminUser
 from .serializers import (
     AdminSolicitacaoManutencaoSerializer,
     EventoSerializer,
@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 class EventoViewSet(viewsets.ModelViewSet):
     queryset = Evento.objects.all()
     serializer_class = EventoSerializer
-    permission_classes = [IsAuthenticatedReadAdminWrite]
+    permission_classes = [AllowAnyReadAdminWrite]
     filter_backends = [
         DjangoFilterBackend,
         filters.SearchFilter,
@@ -53,7 +53,7 @@ class SolicitacaoManutencaoViewSet(viewsets.ModelViewSet):
 
     def get_permissions(self):
         if self.action == 'create':
-            return [AllowAny()]
+            return [IsAuthenticated()]
         return [IsAdminUser()]
 
     def create(self, request, *args, **kwargs):
@@ -98,3 +98,4 @@ class SolicitacaoManutencaoViewSet(viewsets.ModelViewSet):
             )
         except Exception:
             logger.exception('Falha ao enviar e-mail da solicitação %s.', solicitacao.protocolo)
+            
