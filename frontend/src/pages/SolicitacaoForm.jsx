@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import toast, { Toaster } from 'react-hot-toast';
 
+const API_URL = import.meta.env.VITE_API_URL || '/api';
+
 export default function SolicitacaoForm() {
     const [formData, setFormData] = useState({
         tipo: 'bug',
@@ -40,7 +42,7 @@ export default function SolicitacaoForm() {
         setLoading(true);
 
         try {
-            const response = await fetch('http://localhost:8000/api/solicitacoes/', {
+            const response = await fetch(`${API_URL}/solicitacoes/`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
