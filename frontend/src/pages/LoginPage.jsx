@@ -22,10 +22,13 @@ export default function LoginPage() {
   const location = useLocation();
 
   if (isAuthenticated) {
-    return <Navigate to={isAdmin ? '/eventos' : location.state?.from?.pathname || '/eventos'} replace />;
+    const params = new URLSearchParams(location.search);
+    const from = params.get('redirect') || '/eventos';
+    return <Navigate to={isAdmin ? '/eventos' : from} replace />;
   }
 
-  const from = location.state?.from?.pathname || '/eventos';
+  const params = new URLSearchParams(location.search);
+  const from = params.get('redirect') || '/eventos';
 
   const handleSubmit = async (event) => {
     event.preventDefault();

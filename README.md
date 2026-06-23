@@ -173,6 +173,75 @@ git commit -m "feat: adiciona validação de capacidade no serializer"
 
 ---
 
+## Frontend (React + Vite)
+
+### Setup Local
+
+```bash
+# 1. Entre na pasta do frontend
+cd ../frontend  # a partir da raiz do repo
+
+# 2. Instale dependências
+npm install
+
+# 3. Configure variáveis de ambiente
+cp .env.example .env  # se existir, ou crie .env com:
+# VITE_API_URL=http://localhost:8000/api
+
+# 4. Inicie o servidor de desenvolvimento
+npm run dev
+```
+
+O frontend estará em: `http://localhost:5173/` (proxy `/api` → `http://localhost:8000/api`)
+
+### Build de Produção
+
+```bash
+npm run build
+# Gera pasta dist/ otimizada para deploy
+```
+
+### Variáveis de Ambiente (Frontend)
+
+| Variável | Dev (padrão) | Produção (Amplify) |
+|----------|--------------|---------------------|
+| `VITE_API_URL` | `/api` (proxy Vite) | `https://seu-app.amplifyapp.com/api` |
+
+### Estrutura do Frontend
+
+```
+frontend/
+├── package.json
+├── vite.config.js          # Proxy /api → localhost:8000
+├── index.html
+├── .env.example
+├── src/
+│   ├── main.jsx           # Entry point
+│   ├── App.jsx            # Rotas + Layout principal
+│   ├── pages/
+│   │   ├── EventosPage.jsx    # CRUD de eventos (admin/user)
+│   │   ├── SolicitacaoForm.jsx # Formulário /solicitar (público)
+│   │   ├── LoginPage.jsx      # Página /login
+│   │   └── SolicitacoesPage.jsx # Admin: gerenciar solicitações
+│   ├── auth/
+│   │   ├── AuthContext.jsx    # JWT + refresh automático
+│   │   └── ProtectedRoute.jsx # Guardas de rota por role
+│   └── services/
+│       └── api.js            # Axios instance com interceptor JWT
+└── public/
+```
+
+### Scripts Disponíveis
+
+| Comando | Descrição |
+|---------|-----------|
+| `npm run dev` | Servidor dev com HMR |
+| `npm run build` | Build produção (`dist/`) |
+| `npm run preview` | Preview do build local |
+| `npm run lint` | ESLint |
+
+---
+
 ### Branches Protegidas (Configure em Settings → Branches)
 
 - `main`: **Require PR review**

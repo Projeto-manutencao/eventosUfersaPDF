@@ -15,8 +15,9 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     setUnauthorizedHandler(() => {
       logout();
-      if (!['/login', '/admin-login', '/eventos'].includes(window.location.pathname)) {
-        window.location.assign('/login');
+      if (!['/login', '/admin-login'].includes(window.location.pathname)) {
+        const redirect = encodeURIComponent(window.location.pathname + window.location.search);
+        window.location.assign(`/login?redirect=${redirect}`);
       }
     });
   }, [logout]);
