@@ -1,6 +1,18 @@
 from django.db import models
 
 
+class ProtocoloCounter(models.Model):
+    data = models.DateField(unique=True)
+    contador = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        verbose_name = 'Contador de Protocolo'
+        verbose_name_plural = 'Contadores de Protocolo'
+
+    def __str__(self):
+        return f'{self.data} - {self.contador}'
+
+
 class Evento(models.Model):
     titulo = models.CharField(max_length=200)
     descricao = models.TextField(blank=True)
@@ -91,21 +103,39 @@ class SolicitacaoManutencao(models.Model):
         return self.protocolo
     
     def save(self, *args, **kwargs):
-        # 1. Verifica se o protocolo já existe (para não gerar um novo se você estiver apenas editando a solicitação)
-        if not self.protocolo: 
+        if not self.protocolo:
+            from django.utils import timezone
+            from django.db import IntegrityError, transaction, connection
             
-            # 2. Pega a data e hora atual baseada nas configurações do seu settings.py
-            from django.utils import timezone 
-            hoje = timezone.now().strftime('%Y%m%d') # Formata para algo como '20260622'
+            max_tentativas = 10
+            for _ in range(max_tentativas):
+                hoje = timezone.now().date()
+                hoje_str = hoje.strftime('%Y%m%d')
+                
+                with transaction.atomic():
+                    # SQLite não suporta SELECT FOR UPDATE, usar abordagem alternativa
+                    # Tentar incrementar atomicamente via UPDATE
+                    with connection.cursor() as cursor:
+                        cursor.execute(
+                            """
+                            INSERT INTO events_protocolocounter (data, contador)
+                            VALUES (%s, 1)
+                            ON CONFLICT(data) DO UPDATE SET contador = contador + 1
+                            RETURNING contador
+                            """,
+                            [hoje]
+                        )
+                        row = cursor.fetchone()
+                        contador = row[0] if row else 1
+                    
+                    self.protocolo = f'SOL-{hoje_str}-{contador:03d}'
+                    
+                    try:
+                        super().save(*args, **kwargs)
+                        return
+                    except IntegrityError:
+                        continue
             
-            # 3. Conta quantas solicitações já foram criadas HOJE e soma 1 para ser o número do protocolo atual
-            count = SolicitacaoManutencao.objects.filter(
-                criado_em__date=timezone.now().date()
-            ).count() + 1
-            
-            # 4. Monta a string do protocolo. Ex: SOL-20260622-001
-            # O '03d' garante que o número terá sempre 3 dígitos (001, 002, 010, etc)
-            self.protocolo = f'SOL-{hoje}-{count:03d}'
-            
-        # 5. Chama o método save() original do Django para efetivamente gravar no banco de dados
-        super().save(*args, **kwargs)
+            raise IntegrityError('Nao foi possivel gerar protocolo unico apos varias tentativas')
+        else:
+            super().save(*args, **kwargs)

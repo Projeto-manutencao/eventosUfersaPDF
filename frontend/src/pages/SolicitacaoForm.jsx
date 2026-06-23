@@ -51,8 +51,15 @@ export default function SolicitacaoForm() {
         prioridade: 'media',
       });
     } catch (error) {
-      toast.error('Ocorreu um erro ao enviar sua solicitacao. Tente novamente.');
-      console.error(error);
+      console.error('Erro completo:', error);
+      const msg = error.response?.data?.detail 
+        || error.response?.data?.non_field_errors?.[0]
+        || Object.values(error.response?.data || {})
+            .flat()
+            .join(', ')
+        || error.message
+        || 'Erro desconhecido';
+      toast.error(msg, { duration: 8000 });
     } finally {
       setLoading(false);
     }
