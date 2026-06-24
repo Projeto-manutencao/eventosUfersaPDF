@@ -1,248 +1,207 @@
-# Projeto Eventos UFERSA
+# Eventos UFERSA
 
-Repositório central do sistema de eventos da UFERSA-PDF
+Sistema web para divulgacao de eventos e registro de solicitacoes de manutencao/melhoria. A aplicacao possui uma area publica para consulta de eventos, cadastro/login de usuario comum para envio de solicitacoes e acesso administrativo para gerenciamento dos eventos e acompanhamento das solicitacoes.
+
+## Funcionalidades
+
+- Listagem publica de eventos.
+- Busca, filtro por status e ordenacao de eventos.
+- Cadastro e login de usuario comum.
+- Login separado para administrador.
+- CRUD de eventos restrito a administradores.
+- Formulario de solicitacao de manutencao para usuarios autenticados.
+- Painel administrativo para listar solicitacoes e atualizar status.
+- Envio de e-mail para a equipe quando uma solicitacao e registrada.
+- Admin Django para gerenciamento direto dos dados.
 
 ## Tecnologias
 
-- **Backend**: Django 5.0 + Django REST Framework
-- **Banco de Dados**: SQLite (dev) / PostgreSQL - Neon/RDS (produção)
-- **Deploy**: AWS Amplify + Gunicorn + WhiteNoise
+- Backend: Django 5, Django REST Framework e Simple JWT.
+- Frontend: React, Vite e Axios.
+- Banco de dados: SQLite.
+- Deploy recomendado: EC2 com Gunicorn e Nginx.
 
-## Pré-requisitos
+## Como Executar Localmente
 
-- Python 3.12+
-- pip / venv
-- **Nenhum banco de dados local necessário** (usa SQLite)
-
-## Setup Local (Zero Config)
-
-```bash
-# 1. Clone o repositório
-git clone <URL_DO_REPOSITORIO>
-cd eventosUfersaPDF/backend
-
-# 2. Crie e ative o virtualenv
-python -m venv venv
-source venv/bin/activate  # Linux/Mac
-# venv\Scripts\activate   # Windows
-
-# 3. Instale dependências
-pip install -r requirements.txt
-
-# 4. Configure variáveis de ambiente
-cp .env.example .env
-# Edite .env se necessário (opcional para dev)
-
-# 5. Rode migrações (cria db.sqlite3 automaticamente)
-python manage.py migrate
-
-# 6. Crie superusuário (opcional)
-python manage.py createsuperuser
-
-# 7. Inicie o servidor
-python manage.py runserver
-```
-
-A API estará em: `http://localhost:8000/api/`
-Admin Django: `http://localhost:8000/admin/`
-
-## Setup com Docker Compose (Opcional - Para Testar PostgreSQL Local)
+### Backend
 
 ```bash
 cd backend
-docker compose up --build
+python -m venv venv
 ```
 
-> **Nota**: O desenvolvimento padrão usa SQLite. O `docker-compose.yml` sobe PostgreSQL apenas se você quiser testar com o mesmo banco de produção localmente.
-
-## Variáveis de Ambiente
-
-| Variável | Dev (padrão) | Produção (Amplify) |
-|----------|--------------|---------------------|
-| `DJANGO_SECRET_KEY` | Gerada automaticamente | **Obrigatório** (gere um novo) |
-| `DEBUG` | `True` | `False` |
-| `ALLOWED_HOSTS` | `localhost,127.0.0.1` | `seu-app.amplifyapp.com` |
-| `CORS_ALLOWED_ORIGINS` | `http://localhost:3000` | `https://seu-frontend.com` |
-| `CSRF_TRUSTED_ORIGINS` | `http://localhost:3000` | `https://seu-frontend.com` |
-| `DATABASE_URL` | **Não usado** (usa SQLite) | `postgres://user:pass@host:5432/db?sslmode=require` |
-
-> **Dica**: No Amplify, configure as variáveis no painel **Environment variables**. O `DATABASE_URL` vem do RDS/Neon.
-
-## Estrutura do Projeto
-
-```
-backend/
-├── manage.py
-├── requirements.txt
-├── docker-compose.yml
-├── Dockerfile
-├── .env.example
-├── events_api/           # Configuração do projeto Django
-│   ├── settings/
-│   │   ├── base.py       # Configurações compartilhadas
-│   │   ├── dev.py        # Desenvolvimento
-│   │   └── prod.py       # Produção
-│   ├── urls.py
-│   ├── wsgi.py
-│   └── asgi.py
-└── events/               # App de eventos
-    ├── models.py         # Evento, Inscricao
-    ├── views.py          # ViewSets (CRUD)
-    ├── serializers.py    # DRF Serializers
-    ├── urls.py           # Rotas da API
-    └── admin.py          # Admin do Django
-```
-
-## Endpoints da API
-
-| Método | Endpoint | Descrição |
-|--------|----------|-----------|
-| GET | `/api/eventos/` | Lista eventos (paginado, busca, ordenação) |
-| POST | `/api/eventos/` | Cria evento |
-| GET | `/api/eventos/{id}/` | Detalhe do evento |
-| PUT/PATCH | `/api/eventos/{id}/` | Atualiza evento |
-| DELETE | `/api/eventos/{id}/` | Remove evento |
-
-**Query params úteis:**
-- `?search=termo` - busca em titulo, descricao, local, organizador
-- `?ativo=true` - filtra por ativo
-- `?ordering=-data_inicio` - ordena (prefixo `-` = desc)
-- `?page=2&page_size=10` - paginação
-
-## Convenções de Commit
-
-Este projeto adota [Conventional Commits](https://www.conventionalcommits.org/).
-
-**Exemplos:**
-```
-feat: adiciona endpoint de inscrição em eventos
-fix: corrige validação de data fim anterior à data início
-docs: atualiza README com setup do Docker
-refactor: extrai lógica de busca para service
-chore: atualiza dependências do requirements.txt
-```
-
-## Fluxo de Trabalho da Equipe (Git & GitHub Issues)
-
-### 1. Pegar uma Issue (Desenvolvedor)
+Ative o ambiente virtual:
 
 ```bash
-# 1. Atualize a main
-git checkout main
-git pull origin main
+# Linux/Mac
+source venv/bin/activate
 
-# 2. Crie branch a partir da main
-git checkout -b feat/nome-da-feature  # ou fix/, docs/, refactor/, chore/
-
-# 3. Trabalhe na feature
-# ... código ...
-
-# 4. Commits pequenos e claros
-git add .
-git commit -m "feat: adiciona validação de capacidade no serializer"
+# Windows PowerShell
+venv\Scripts\Activate.ps1
 ```
 
-### 2. Abrir Pull Request
-
-- Push da branch: `git push origin feat/nome-da-feature`
-- No GitHub: **Compare & pull request**
-- **Title**: segue Conventional Commits (`feat: ...`)
-- **Description**: 
-  - `Closes #<número-da-issue>` (fecha automaticamente)
-  - Resumo do que mudou
-  - Como testar localmente
-- **Reviewers**: adicione 1-2 colegas
-- **Labels**: mantém as da issue
-
-### 3. Code Review (Obrigatório)
-
-- Mínimo **1 aprovação** para merge
-- Resolva comentários (*request changes* → *comment resolved*)
-
-### 4. Merge
-
-- **Squash and merge** (histórico limpo)
-- Delete branch após merge
-- Issue fecha automaticamente
-
-### Checklist Rápido (Cole no PR)
-
-- [ ] Migrações geradas se mudou model (`makemigrations`)
-- [ ] Documentação atualizada se mudou API
-- [ ] `Closes #issue` na descrição
-
----
-
-## Frontend (React + Vite)
-
-### Setup Local
+Instale as dependencias e prepare o banco:
 
 ```bash
-# 1. Entre na pasta do frontend
-cd ../frontend  # a partir da raiz do repo
+pip install -r requirements.txt
+python manage.py migrate
+python manage.py createsuperuser
+python manage.py runserver
+```
 
-# 2. Instale dependências
+O backend ficara disponivel em:
+
+- API: `http://localhost:8000/api/`
+- Admin Django: `http://localhost:8000/admin/`
+
+### Frontend
+
+Em outro terminal:
+
+```bash
+cd frontend
 npm install
-
-# 3. Configure variáveis de ambiente
-cp .env.example .env  # se existir, ou crie .env com:
-# VITE_API_URL=http://localhost:8000/api
-
-# 4. Inicie o servidor de desenvolvimento
 npm run dev
 ```
 
-O frontend estará em: `http://localhost:5173/` (proxy `/api` → `http://localhost:8000/api`)
+O frontend ficara disponivel em:
 
-### Build de Produção
+- Aplicacao: `http://localhost:5173/`
+
+Durante o desenvolvimento, o Vite faz proxy de `/api` para `http://localhost:8000`.
+
+## Fluxo de Acesso
+
+### Visitante
+
+- Acessa `/eventos`.
+- Visualiza a lista de eventos sem login.
+- Ao tentar solicitar manutencao, e direcionado para login/cadastro.
+
+### Usuario Comum
+
+- Acessa `/login`.
+- Pode criar uma conta ou entrar com uma conta existente.
+- Visualiza eventos.
+- Pode enviar solicitacoes em `/solicitar`.
+- Nao visualiza botoes administrativos.
+
+### Administrador
+
+- E criado via `python manage.py createsuperuser`.
+- Acessa `/admin-login`.
+- Pode criar, editar e excluir eventos.
+- Pode acessar `/solicitacoes` para acompanhar solicitacoes de manutencao.
+- Pode acessar o Django Admin em `/admin/`.
+
+## Rotas Principais
+
+| Rota | Acesso | Descricao |
+|------|--------|-----------|
+| `/eventos` | Publico | Lista de eventos |
+| `/login` | Publico | Login/cadastro de usuario comum |
+| `/admin-login` | Publico | Login de administrador |
+| `/solicitar` | Usuario autenticado | Formulario de solicitacao |
+| `/solicitacoes` | Administrador | Painel de solicitacoes |
+| `/admin/` | Administrador | Admin Django |
+
+## Endpoints Principais
+
+| Metodo | Endpoint | Acesso | Descricao |
+|--------|----------|--------|-----------|
+| `GET` | `/api/eventos/` | Publico | Lista eventos |
+| `POST` | `/api/eventos/` | Administrador | Cria evento |
+| `PUT/PATCH` | `/api/eventos/{id}/` | Administrador | Atualiza evento |
+| `DELETE` | `/api/eventos/{id}/` | Administrador | Remove evento |
+| `POST` | `/api/auth/register/` | Publico | Cadastra usuario comum |
+| `POST` | `/api/auth/login/` | Publico | Login de usuario comum |
+| `POST` | `/api/auth/admin-login/` | Publico | Login de administrador |
+| `POST` | `/api/auth/refresh/` | Publico | Renova token JWT |
+| `GET` | `/api/auth/me/` | Autenticado | Dados do usuario logado |
+| `POST` | `/api/solicitacoes/` | Autenticado | Cria solicitacao |
+| `GET` | `/api/solicitacoes/` | Administrador | Lista solicitacoes |
+| `PATCH` | `/api/solicitacoes/{id}/` | Administrador | Atualiza status da solicitacao |
+
+## Variaveis de Ambiente
+
+### Backend
+
+Crie um arquivo `.env` dentro de `backend/` quando precisar sobrescrever valores padrao.
+
+```env
+DJANGO_SECRET_KEY=sua-chave-secreta
+DEBUG=True
+ALLOWED_HOSTS=localhost,127.0.0.1
+CORS_ALLOWED_ORIGINS=http://localhost:5173,http://127.0.0.1:5173
+CSRF_TRUSTED_ORIGINS=http://localhost:5173,http://127.0.0.1:5173
+DATABASE_URL=sqlite:///db.sqlite3
+MANUTENCAO_EMAIL_EQUIPE=suporte.eventosufersa@gmail.com
+```
+
+Em producao, use `DEBUG=False` e configure `ALLOWED_HOSTS`, `CORS_ALLOWED_ORIGINS` e `CSRF_TRUSTED_ORIGINS` com o IP ou dominio da instancia.
+
+### Frontend
+
+Para producao, crie `frontend/.env.production`:
+
+```env
+VITE_API_URL=http://IP_DA_EC2/api
+```
+
+## Build
+
+### Backend
 
 ```bash
+cd backend
+python manage.py check
+python manage.py migrate --noinput
+python manage.py collectstatic --noinput
+```
+
+### Frontend
+
+```bash
+cd frontend
 npm run build
-# Gera pasta dist/ otimizada para deploy
 ```
 
-### Variáveis de Ambiente (Frontend)
+O build do frontend sera gerado em `frontend/dist/`.
 
-| Variável | Dev (padrão) | Produção (Amplify) |
-|----------|--------------|---------------------|
-| `VITE_API_URL` | `/api` (proxy Vite) | `https://seu-app.amplifyapp.com/api` |
+## Estrutura do Projeto
 
-### Estrutura do Frontend
+```text
+backend/
+  accounts/        # Autenticacao, cadastro e perfis
+  events/          # Eventos e solicitacoes
+  events_api/      # Configuracoes Django
+  manage.py
+  requirements.txt
 
-```
 frontend/
-├── package.json
-├── vite.config.js          # Proxy /api → localhost:8000
-├── index.html
-├── .env.example
-├── src/
-│   ├── main.jsx           # Entry point
-│   ├── App.jsx            # Rotas + Layout principal
-│   ├── pages/
-│   │   ├── EventosPage.jsx    # CRUD de eventos (admin/user)
-│   │   ├── SolicitacaoForm.jsx # Formulário /solicitar (público)
-│   │   ├── LoginPage.jsx      # Página /login
-│   │   └── SolicitacoesPage.jsx # Admin: gerenciar solicitações
-│   ├── auth/
-│   │   ├── AuthContext.jsx    # JWT + refresh automático
-│   │   └── ProtectedRoute.jsx # Guardas de rota por role
-│   └── services/
-│       └── api.js            # Axios instance com interceptor JWT
-└── public/
+  src/
+    auth/          # Contexto de autenticacao e rotas protegidas
+    pages/         # Telas da aplicacao
+    services/      # Cliente Axios
+  package.json
+  vite.config.js
 ```
 
-### Scripts Disponíveis
+## Validacao Recomendada
 
-| Comando | Descrição |
-|---------|-----------|
-| `npm run dev` | Servidor dev com HMR |
-| `npm run build` | Build produção (`dist/`) |
-| `npm run preview` | Preview do build local |
-| `npm run lint` | ESLint |
+Antes de publicar uma nova versao:
 
----
+```bash
+cd backend
+python manage.py check
+python manage.py makemigrations --check --dry-run
 
-### Branches Protegidas (Configure em Settings → Branches)
+cd ../frontend
+npm run build
+```
 
-- `main`: **Require PR review**
-- Ninguém faz push direto na `main`
+## Observacoes
+
+- O SQLite e suficiente para a proposta atual e para um deploy simples em EC2.
+- Para uso com maior volume de dados ou multiplas instancias, recomenda-se migrar para PostgreSQL.
+- O administrador principal deve ser criado pelo comando `createsuperuser`.
